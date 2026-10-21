@@ -1,0 +1,33 @@
+services:
+  reference-microservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: reference-microservice
+    restart: unless-stopped
+    ports:
+      - '5024:5024'
+      - '5025:5025'
+    environment:
+      - APP_ENV=dev
+      - PORT=5024
+      - TCP_PORT=5025
+      - DB_TYPE=mssql
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PORT=${DB_PORT:-1433}
+      - DB_USER=${DB_USER:-sa}
+      - DB_PASSWORD=${DB_PASSWORD:-Password@123}
+      - DB_NAME=${DB_NAME:-landtrax}
+      - REDIS_ENABLED=true
+      - REDIS_HOST=${REDIS_HOST:-host.docker.internal}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - GATEWAY_SECRET=${GATEWAY_SECRET:-development_gateway_secret_key_landtrax_2026}
+      - MONOLITH_BASE_URL=${MONOLITH_BASE_URL:-http://host.docker.internal:3000}
+    networks:
+      - landtrax-network
+
+networks:
+  landtrax-network:
+    driver: bridge
