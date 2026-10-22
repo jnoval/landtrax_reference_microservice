@@ -1,13 +1,11 @@
 import {
   ConflictException,
-  HttpException,
-  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { CommonResponse, CustomMeta } from '../../../shared/common';
 import { RegistryOfDeedEntity } from '../../../shared/infrastructure/database/entities/registry-of-deed.entity';
 import { RedisCacheService } from '../../../shared/infrastructure/redis/redis-cache.service';
