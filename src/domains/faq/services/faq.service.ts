@@ -1,13 +1,11 @@
 import {
   ConflictException,
-  HttpException,
-  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import {  IsNull, Not, Repository } from 'typeorm';
 import { CommonResponse, CustomMeta } from '../../../shared/common';
 import FAQEntity from '../../../shared/infrastructure/database/entities/faq.entity';
 import { uuidv4 } from '../../../shared/utils/uuid';
@@ -16,7 +14,6 @@ import {
   BulkUpdateFAQStatusDto,
   CreateFAQDto,
   UpdateFAQDto,
-  UpdateFAQStatusDto,
 } from '../dtos/faq.dto';
 
 @Injectable()
