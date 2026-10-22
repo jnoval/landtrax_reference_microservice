@@ -1,7 +1,5 @@
 import {
   ConflictException,
-  HttpException,
-  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
@@ -121,7 +119,7 @@ export class SystemSettingsService {
       ...data,
       createdBy: userId,
       createdDate: new Date(),
-      isActive: data.isActive !== undefined ? data.isActive : true,
+      isActive: data.isActive ?? true,
     });
 
     const saved = await this._settingRepo.save(setting);
