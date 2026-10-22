@@ -31,6 +31,17 @@ export class PermissionGuard extends GatewayUserGuard implements CanActivate {
 
     if (!required) return true;
 
+    const rawRole = String(request.user?.role ?? request.headers['x-user-role'] ?? '');
+    const isAdmin =
+      rawRole === 'System Admin' ||
+      rawRole === 'Super Admin' ||
+      rawRole.toLowerCase() === 'system admin' ||
+      rawRole.toLowerCase() === 'super admin';
+
+    if (isAdmin) {
+      return true;
+    }
+
     const rawPermissions = request.headers['x-user-permissions'] ?? '';
     const permissions = new Set(
       String(rawPermissions)

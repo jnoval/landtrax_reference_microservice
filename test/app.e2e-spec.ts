@@ -5,6 +5,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
 import { AppController } from '../src/app.controller';
 import { AppService } from '../src/app.service';
+import { CategoryController } from '../src/domains/category/controllers/category.controller';
+import { CategoryService } from '../src/domains/category/services/category.service';
 import { FAQController } from '../src/domains/faq/controllers/faq.controller';
 import { FAQService } from '../src/domains/faq/services/faq.service';
 import { LocationController } from '../src/domains/location/controllers/location.controller';
@@ -100,6 +102,10 @@ describe('Reference Microservice (e2e)', () => {
       'Create FAQ',
       'Edit FAQ',
       'Delete FAQ',
+      'View Service Category',
+      'Create Service Category',
+      'Edit Service Category',
+      'Delete Service Category',
     ].join(','),
   };
 
@@ -107,6 +113,7 @@ describe('Reference Microservice (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [
         AppController,
+        CategoryController,
         ServiceCatalogController,
         ServiceChecklistController,
         RequirementMappingController,
@@ -118,6 +125,7 @@ describe('Reference Microservice (e2e)', () => {
       providers: [
         Reflector,
         AppService,
+        CategoryService,
         ServiceCatalogService,
         ServiceChecklistService,
         RequirementMappingService,
@@ -235,6 +243,17 @@ describe('Reference Microservice (e2e)', () => {
           expect(res.body.success).toBe(true);
         });
     });
+
+    it('/requirement/active (GET) returns active requirements without GUID errors', () => {
+      return request(app.getHttpServer())
+        .get('/requirement/active?page=1&limit=10')
+        .set(gatewayHeaders)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toBeDefined();
+          expect(res.body.meta).toBeDefined();
+        });
+    });
   });
 
   describe('System Settings Endpoints', () => {
@@ -293,6 +312,37 @@ describe('Reference Microservice (e2e)', () => {
     it('/faq (POST) validates payload requirement and rejects empty body with 400', () => {
       return request(app.getHttpServer())
         .post('/faq')
+        .set(gatewayHeaders)
+        .send({})
+        .expect(400);
+    });
+  });
+
+  describe('Category Endpoints', () => {
+    it('/category (GET) returns paginated list of categories', () => {
+      return request(app.getHttpServer())
+        .get('/category')
+        .set(gatewayHeaders)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toBeDefined();
+          expect(res.body.meta).toBeDefined();
+        });
+    });
+
+    it('/category/get-all (GET) returns all categories array without pagination', () => {
+      return request(app.getHttpServer())
+        .get('/category/get-all')
+        .set(gatewayHeaders)
+        .expect(200)
+        .expect((res) => {
+          expect(Array.isArray(res.body)).toBe(true);
+        });
+    });
+
+    it('/category (POST) validates payload requirement and rejects empty body with 400', () => {
+      return request(app.getHttpServer())
+        .post('/category')
         .set(gatewayHeaders)
         .send({})
         .expect(400);

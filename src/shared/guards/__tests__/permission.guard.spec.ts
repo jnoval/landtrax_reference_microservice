@@ -53,4 +53,18 @@ describe('PermissionGuard', () => {
 
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
   });
+
+  it('allows access when user has System Admin or Super Admin role', () => {
+    const ctx = buildContext(
+      {
+        'x-gateway-secret': 'valid-secret',
+        'x-user-id': 'u1',
+        'x-user-role': 'System Admin',
+        'x-user-permissions': '',
+      },
+      'Delete Service Catalog',
+    );
+
+    expect(guard.canActivate(ctx)).toBe(true);
+  });
 });

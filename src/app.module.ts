@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { getTypeOrmConfig } from './config/app.config';
 import redisConfig from './config/redis.config';
+import { CategoryModule } from './domains/category/category.module';
 import { FAQModule } from './domains/faq/faq.module';
 import { LocationModule } from './domains/location/location.module';
 import { RequirementModule } from './domains/requirement/requirement.module';
@@ -23,6 +24,7 @@ import { SystemSettingsModule } from './domains/system-settings/system-settings.
       useFactory: (configService: ConfigService) => getTypeOrmConfig(configService),
       inject: [ConfigService],
     }),
+    CategoryModule,
     ServiceCatalogModule,
     RequirementModule,
     SystemSettingsModule,
