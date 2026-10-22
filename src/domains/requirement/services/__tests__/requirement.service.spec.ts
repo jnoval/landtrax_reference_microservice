@@ -71,17 +71,24 @@ describe('RequirementService', () => {
 
   describe('findOne & findByCode', () => {
     it('returns requirement by id', async () => {
-      mockRepo.findOne.mockResolvedValue({ id: 'req-1', name: 'Valid' });
+      const validId = 'a0000000-0000-0000-0000-000000000001';
+      mockRepo.findOne.mockResolvedValue({ id: validId, name: 'Valid' });
 
-      const res = await service.findOne('req-1');
+      const res = await service.findOne(validId);
       expect(res.success).toBe(true);
-      expect(res.data?.id).toBe('req-1');
+      expect(res.data?.id).toBe(validId);
     });
 
     it('throws NotFoundException when requirement not found by id', async () => {
+      const validId = 'a0000000-0000-0000-0000-000000000002';
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('req-404')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(validId)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException immediately when id is an invalid UUID (e.g. "active")', async () => {
+      await expect(service.findOne('active')).rejects.toThrow(NotFoundException);
+      expect(mockRepo.findOne).not.toHaveBeenCalled();
     });
 
     it('returns requirement by code', async () => {
@@ -93,19 +100,85 @@ describe('RequirementService', () => {
     });
   });
 
-  describe('update & delete', () => {
-    it('updates requirement', async () => {
-      mockRepo.findOne.mockResolvedValue({ id: 'req-1', name: 'Old' });
+  describe('getActiveRequirements', () => {
+    it('returns active requirements with pagination meta and applies filters', async () => {
+      const mockQb = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(1),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([{ id: 'a0000000-0000-0000-0000-000000000001', name: 'Tax Dec', isActive: true }]),
+      };
+      mockRepo.createQueryBuilder.mockReturnValue(mockQb);
 
-      const res = await service.update('user-1', 'req-1', { description: 'Updated' });
+      const res = await (service as any).getActiveRequirements(1, 10, 'Tax', {
+        type: 'DOCUMENT',
+        code: 'REQ-1',
+      });
+
+      expect(res.data).toHaveLength(1);
+      expect(res.meta.total).toBe(1);
+      expect(mockQb.andWhere).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  describe('updateStatus & bulkUpdate', () => {
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+
+    it('updates status of a requirement', async () => {
+      mockRepo.findOne.mockResolvedValue({ id: validId, isActive: false });
+
+      const res = await service.updateStatus(validId, { isActive: true });
+      expect(res.success).toBe(true);
+      expect(mockRepo.save).toHaveBeenCalled();
+    });
+
+    it('bulk updates requirement status', async () => {
+      const mockQb = {
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        whereInIds: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 2 }),
+      };
+      mockRepo.createQueryBuilder.mockReturnValue(mockQb);
+
+      const res = await service.bulkUpdateStatus({ ids: [validId], isActive: false });
+      expect(res.success).toBe(true);
+    });
+
+    it('bulk deletes requirements', async () => {
+      const mockQb = {
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        whereInIds: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 1 }),
+      };
+      mockRepo.createQueryBuilder.mockReturnValue(mockQb);
+
+      const res = await service.bulkDelete({ ids: [validId] });
+      expect(res.success).toBe(true);
+    });
+  });
+
+  describe('update & delete', () => {
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+
+    it('updates requirement', async () => {
+      mockRepo.findOne.mockResolvedValue({ id: validId, name: 'Old' });
+
+      const res = await service.update('user-1', validId, { description: 'Updated' });
       expect(res.success).toBe(true);
       expect(mockRepo.save).toHaveBeenCalled();
     });
 
     it('soft deletes requirement', async () => {
-      mockRepo.findOne.mockResolvedValue({ id: 'req-1', deletedDate: null });
+      mockRepo.findOne.mockResolvedValue({ id: validId, deletedDate: null });
 
-      const res = await service.delete('req-1');
+      const res = await service.delete(validId);
       expect(res.success).toBe(true);
       expect(mockRepo.save).toHaveBeenCalled();
     });

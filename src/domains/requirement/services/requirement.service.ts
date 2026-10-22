@@ -1,17 +1,15 @@
 import {
   BadRequestException,
   ConflictException,
-  HttpException,
-  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { CommonResponse, CustomMeta } from '../../../shared/common';
 import RequirementEntity from '../../../shared/infrastructure/database/entities/requirement.entity';
-import { uuidv4 } from '../../../shared/utils/uuid';
+import { isUUID, uuidv4 } from '../../../shared/utils/uuid';
 import { validateFileNameFormat } from '../constants/filename-variables';
 import {
   BulkDeleteRequirementDto,
@@ -125,7 +123,63 @@ export class RequirementService {
     };
   }
 
+  async getActiveRequirements(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    filters?: { type?: string; code?: string; isActive?: boolean },
+  ): Promise<{
+    data: RequirementEntity[];
+    meta: CustomMeta;
+  }> {
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Math.min(100, Number(limit) || 10));
+    const skip = (pageNum - 1) * limitNum;
+
+    const queryBuilder = this._requirementRepo
+      .createQueryBuilder('requirement')
+      .where('requirement.deletedDate IS NULL')
+      .andWhere('ISNULL(requirement.isActive, 0) = 1');
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(requirement.name LIKE :search OR requirement.requirementCode LIKE :search OR requirement.description LIKE :search OR requirement.type LIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    if (filters?.type) {
+      queryBuilder.andWhere('requirement.type = :type', { type: filters.type });
+    }
+    if (filters?.code) {
+      queryBuilder.andWhere('requirement.requirementCode = :code', { code: filters.code });
+    }
+
+    queryBuilder.orderBy('requirement.createdDate', 'DESC');
+
+    const total = await queryBuilder.getCount();
+
+    queryBuilder.skip(skip).take(limitNum);
+    const data = await queryBuilder.getMany();
+
+    this._logger.log(`Retrieved ${data.length} active requirements`);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+    };
+  }
+
   async findOne(id: string): Promise<CommonResponse<RequirementEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Requirement with ID ${id} not found`);
+    }
+
     const requirement = await this._requirementRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });
@@ -162,6 +216,10 @@ export class RequirementService {
     id: string,
     data: UpdateRequirementDto,
   ): Promise<CommonResponse<RequirementEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Requirement with ID ${id} not found`);
+    }
+
     const requirement = await this._requirementRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });
@@ -202,6 +260,10 @@ export class RequirementService {
     id: string,
     dto: UpdateRequirementStatusDto,
   ): Promise<CommonResponse<RequirementEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Requirement with ID ${id} not found`);
+    }
+
     const requirement = await this._requirementRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });
@@ -241,6 +303,10 @@ export class RequirementService {
   }
 
   async delete(id: string): Promise<CommonResponse> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Requirement with ID ${id} not found`);
+    }
+
     const requirement = await this._requirementRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });

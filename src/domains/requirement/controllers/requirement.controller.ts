@@ -54,6 +54,25 @@ export class RequirementController {
     return await this._requirementService.findByCode(code);
   }
 
+  @Get('active')
+  @PermissionRequired('View Services Catalogs')
+  @ApiOperation({ summary: 'Get all active requirements' })
+  async getActiveRequirements(
+    @ReqContext() _req: RequestContextDto,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+    @Query('type') type?: string,
+    @Query('code') code?: string,
+    @Query('isActive') isActive?: boolean,
+  ) {
+    return await this._requirementService.getActiveRequirements(page, limit, search, {
+      type,
+      code,
+      isActive,
+    });
+  }
+
   @Get(':id')
   @PermissionRequired('View Services Catalogs')
   @ApiOperation({ summary: 'Get requirement by id' })

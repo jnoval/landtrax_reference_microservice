@@ -54,4 +54,10 @@ describe('RequirementController', () => {
     expect(res.success).toBe(true);
     expect(mockService.delete).toHaveBeenCalledWith('r1');
   });
+
+  it('delegates getActiveRequirements to service', async () => {
+    mockService.getActiveRequirements = jest.fn().mockResolvedValue({ data: [], meta: { total: 0 } });
+    const res = await (controller as any).getActiveRequirements({} as any, 1, 10, 'search');
+    expect(mockService.getActiveRequirements).toHaveBeenCalledWith(1, 10, 'search', expect.anything());
+  });
 });
