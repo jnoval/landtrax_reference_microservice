@@ -10,8 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Audit } from '../../../shared/decorators/audit.decorator';
 import { AuditDescription } from '../../../shared/decorators/audit-description.decorator';
+import { Audit } from '../../../shared/decorators/audit.decorator';
 import { PermissionRequired } from '../../../shared/decorators/authorization.decorators';
 import { ReqContext, RequestContextDto } from '../../../shared/decorators/req-context.decorator';
 import { GatewayUserGuard } from '../../../shared/guards/gateway-user.guard';
@@ -19,8 +19,8 @@ import { PermissionGuard } from '../../../shared/guards/permission.guard';
 import { BulkDeleteServiceDto } from '../dtos/bulk-delete-service.dto';
 import { BulkUpdateServiceStatusDto } from '../dtos/bulk-update-service-status.dto';
 import { CreateServiceDto } from '../dtos/create-service.dto';
-import { UpdateServiceDto } from '../dtos/update-service.dto';
 import { UpdateServiceStatusDto } from '../dtos/update-service-status.dto';
+import { UpdateServiceDto } from '../dtos/update-service.dto';
 import { ServiceCatalogService } from '../services/service.service';
 
 @ApiTags('Service Catalog')
@@ -46,6 +46,21 @@ export class ServiceCatalogController {
     return await this._serviceService.findAll(query);
   }
 
+  @Get('active-catalogs')
+  //@PermissionRequired('View Services Catalogs')
+  @AuditDescription('Accessed the directory of active professional service offerings')
+  @ApiOperation({ summary: 'Get all active services with pagination' })
+  async getActiveCatalogs(@Query() query: any) {
+    return await this._serviceService.findAll({ ...query, isActive: true });
+  }
+
+  @Get(':id/checklist')
+  @PermissionRequired('View Services Catalogs')
+  @ApiOperation({ summary: 'Get checklist items for a service' })
+  async getChecklist(@Param('id') id: string) {
+    return await this._serviceService.getChecklist(id);
+  }
+
   @Get(':id')
   @PermissionRequired('View Services Catalogs')
   @ApiOperation({ summary: 'Get service by id' })
@@ -60,14 +75,14 @@ export class ServiceCatalogController {
     return await this._serviceService.bulkUpdateStatus(data);
   }
 
-  @Delete('bulk/delete')
+  @Delete(['bulk', 'bulk/delete'])
   @PermissionRequired('Delete Service Catalog')
   @ApiOperation({ summary: 'Bulk delete services' })
   async bulkDelete(@Body() data: BulkDeleteServiceDto) {
     return await this._serviceService.bulkDelete(data);
   }
 
-  @Patch(':id/status')
+  @Patch(['status/:id', ':id/status'])
   @PermissionRequired('Edit Service Catalog')
   @ApiOperation({ summary: 'Update service status' })
   async updateStatus(@Param('id') id: string, @Body() data: UpdateServiceStatusDto) {

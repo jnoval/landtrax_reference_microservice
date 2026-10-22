@@ -72,58 +72,72 @@ describe('ServiceCatalogService', () => {
   });
 
   describe('findOne', () => {
-    it('returns service when found', async () => {
-      mockServiceRepo.findOne.mockResolvedValue({ id: 'svc-1', name: 'Title Search' });
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+    const nonExistentId = 'a0000000-0000-0000-0000-000000000002';
 
-      const res = await service.findOne('svc-1');
+    it('returns service when found', async () => {
+      mockServiceRepo.findOne.mockResolvedValue({ id: validId, name: 'Title Search' });
+
+      const res = await service.findOne(validId);
       expect(res.success).toBe(true);
-      expect(res.data?.id).toBe('svc-1');
+      expect(res.data?.id).toBe(validId);
     });
 
     it('throws NotFoundException when not found', async () => {
       mockServiceRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(nonExistentId)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException immediately when id is invalid UUID', async () => {
+      await expect(service.findOne('invalid-uuid')).rejects.toThrow(NotFoundException);
+      expect(mockServiceRepo.findOne).not.toHaveBeenCalled();
     });
   });
 
   describe('update', () => {
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+
     it('updates service successfully', async () => {
       mockServiceRepo.findOne
-        .mockResolvedValueOnce({ id: 'svc-1', name: 'Old Title' })
+        .mockResolvedValueOnce({ id: validId, name: 'Old Title' })
         .mockResolvedValueOnce(null);
 
-      const res = await service.update('user-1', 'svc-1', { name: 'New Title' });
+      const res = await service.update('user-1', validId, { name: 'New Title' });
       expect(res.success).toBe(true);
       expect(mockServiceRepo.save).toHaveBeenCalled();
     });
 
     it('throws BadRequestException if new name conflicts', async () => {
       mockServiceRepo.findOne
-        .mockResolvedValueOnce({ id: 'svc-1', name: 'Old Title' })
-        .mockResolvedValueOnce({ id: 'svc-2', name: 'New Title' });
+        .mockResolvedValueOnce({ id: validId, name: 'Old Title' })
+        .mockResolvedValueOnce({ id: 'a0000000-0000-0000-0000-000000000002', name: 'New Title' });
 
-      await expect(service.update('user-1', 'svc-1', { name: 'New Title' })).rejects.toThrow(
+      await expect(service.update('user-1', validId, { name: 'New Title' })).rejects.toThrow(
         BadRequestException,
       );
     });
   });
 
   describe('updateStatus', () => {
-    it('updates active status', async () => {
-      mockServiceRepo.findOne.mockResolvedValue({ id: 'svc-1', isActive: true });
+    const validId = 'a0000000-0000-0000-0000-000000000001';
 
-      const res = await service.updateStatus('svc-1', { isActive: false });
+    it('updates active status', async () => {
+      mockServiceRepo.findOne.mockResolvedValue({ id: validId, isActive: true });
+
+      const res = await service.updateStatus(validId, { isActive: false });
       expect(res.success).toBe(true);
       expect(mockServiceRepo.save).toHaveBeenCalled();
     });
   });
 
   describe('delete', () => {
-    it('soft deletes service', async () => {
-      mockServiceRepo.findOne.mockResolvedValue({ id: 'svc-1', deletedDate: null });
+    const validId = 'a0000000-0000-0000-0000-000000000001';
 
-      const res = await service.delete('svc-1');
+    it('soft deletes service', async () => {
+      mockServiceRepo.findOne.mockResolvedValue({ id: validId, deletedDate: null });
+
+      const res = await service.delete(validId);
       expect(res.success).toBe(true);
       expect(mockServiceRepo.save).toHaveBeenCalled();
     });

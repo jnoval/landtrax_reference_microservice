@@ -47,14 +47,14 @@ export class RequirementMappingController {
     return await this._mappingService.findByServiceId(serviceId);
   }
 
-  @Get('source-requirement/:id')
+  @Get(['source/:id', 'source-requirement/:id'])
   @PermissionRequired('View Services Catalogs')
   @ApiOperation({ summary: 'Get requirement mappings by source requirement ID' })
   async findBySourceRequirement(@Param('id') id: string) {
     return await this._mappingService.findBySourceRequirement(id);
   }
 
-  @Get('target-requirement/:id')
+  @Get(['target/:id', 'target-requirement/:id'])
   @PermissionRequired('View Services Catalogs')
   @ApiOperation({ summary: 'Get requirement mappings by target requirement ID' })
   async findByTargetRequirement(@Param('id') id: string) {

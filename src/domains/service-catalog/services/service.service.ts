@@ -7,8 +7,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm';
-import { uuidv4 } from '../../../shared/utils/uuid';
+import {  IsNull, Not, Repository } from 'typeorm';
+import { isUUID, uuidv4 } from '../../../shared/utils/uuid';
 import { CommonResponse, CustomMeta } from '../../../shared/common';
 import ServiceEntity from '../../../shared/infrastructure/database/entities/service-catalog.entity';
 import { CategoryEntity } from '../../../shared/infrastructure/database/entities/category.entity';
@@ -70,7 +70,7 @@ export class ServiceCatalogService {
     sortDirection?: 'ASC' | 'DESC';
   }): Promise<CommonResponse<ServiceEntity[]>> {
     const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const limit = Math.max(1, Math.min(1000, Number(query.limit) || 10));
     const skip = (page - 1) * limit;
 
     const qb = this._serviceRepo
@@ -120,6 +120,10 @@ export class ServiceCatalogService {
   }
 
   async findOne(id: string): Promise<CommonResponse<ServiceEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Service catalog with ID ${id} not found`);
+    }
+
     const service = await this._serviceRepo.findOne({
       where: { id, deletedDate: IsNull() },
       relations: [
@@ -141,11 +145,20 @@ export class ServiceCatalogService {
     };
   }
 
+  async getChecklist(id: string) {
+    const serviceRes = await this.findOne(id);
+    return serviceRes.data?.serviceChecklists || [];
+  }
+
   async update(
     userId: string,
     id: string,
     updateServiceDto: UpdateServiceDto,
   ): Promise<CommonResponse<ServiceEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Service catalog with ID ${id} not found`);
+    }
+
     const service = await this._serviceRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });
@@ -182,6 +195,10 @@ export class ServiceCatalogService {
     id: string,
     dto: UpdateServiceStatusDto,
   ): Promise<CommonResponse<ServiceEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Service catalog with ID ${id} not found`);
+    }
+
     const service = await this._serviceRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });
@@ -220,6 +237,10 @@ export class ServiceCatalogService {
   }
 
   async delete(id: string): Promise<CommonResponse> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Service catalog with ID ${id} not found`);
+    }
+
     const service = await this._serviceRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });

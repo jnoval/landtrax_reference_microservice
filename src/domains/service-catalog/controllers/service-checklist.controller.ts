@@ -54,11 +54,30 @@ export class ServiceChecklistController {
     return await this._checklistService.findOne(id);
   }
 
+  @Patch('service/:serviceId/reorder')
+  @PermissionRequired('Edit Service Catalog')
+  @ApiOperation({ summary: 'Reorder checklist items for a service' })
+  async reorderByService(
+    @Param('serviceId') serviceId: string,
+    @Body() body: { items: ReorderItemDto[] } | ReorderItemDto[],
+  ) {
+    const items = Array.isArray(body) ? body : body.items;
+    return await this._checklistService.reorder(items, serviceId);
+  }
+
   @Patch('reorder')
   @PermissionRequired('Edit Service Catalog')
   @ApiOperation({ summary: 'Reorder checklist items' })
-  async reorder(@Body() items: ReorderItemDto[]) {
+  async reorder(@Body() body: { items: ReorderItemDto[] } | ReorderItemDto[]) {
+    const items = Array.isArray(body) ? body : body.items;
     return await this._checklistService.reorder(items);
+  }
+
+  @Patch(':id/status')
+  @PermissionRequired('Edit Service Catalog')
+  @ApiOperation({ summary: 'Update service checklist status' })
+  async updateStatus(@Param('id') id: string, @Body() data: { isActive: boolean }) {
+    return await this._checklistService.updateStatus(id, data.isActive);
   }
 
   @Patch(':id')
@@ -67,6 +86,17 @@ export class ServiceChecklistController {
   @ApiOperation({ summary: 'Update service checklist item' })
   async update(@Param('id') id: string, @Body() data: UpdateServiceChecklistDto) {
     return await this._checklistService.update(id, data);
+  }
+
+  @Delete('service/:serviceId')
+  @PermissionRequired('Delete Service Catalog')
+  @ApiOperation({ summary: 'Delete all checklist items for a service' })
+  async deleteByService(
+    @Param('serviceId') serviceId: string,
+    @Query('confirmed') confirmed?: string,
+  ) {
+    const isConfirmed = confirmed === 'true';
+    return await this._checklistService.deleteByServiceId(serviceId, isConfirmed);
   }
 
   @Delete(':id')

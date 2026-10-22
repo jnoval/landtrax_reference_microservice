@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -7,8 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
-import { uuidv4 } from '../../../shared/utils/uuid';
+import {  IsNull, Repository } from 'typeorm';
+import { isUUID, uuidv4 } from '../../../shared/utils/uuid';
 import { CommonResponse, CustomMeta } from '../../../shared/common';
 import RequirementEntity from '../../../shared/infrastructure/database/entities/requirement.entity';
 import ServiceEntity from '../../../shared/infrastructure/database/entities/service-catalog.entity';
@@ -97,6 +96,10 @@ export class ServiceChecklistService {
   }
 
   async findOne(id: string): Promise<CommonResponse<ServiceChecklistEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Checklist item with ID ${id} not found`);
+    }
+
     const item = await this._checklistRepo.findOne({
       where: { id, deletedDate: IsNull() },
       relations: ['requirement', 'service'],
@@ -113,21 +116,21 @@ export class ServiceChecklistService {
     };
   }
 
-  async findByServiceId(serviceId: string): Promise<CommonResponse<ServiceChecklistEntity[]>> {
+  async findByServiceId(serviceId: string): Promise<ServiceChecklistEntity[]> {
     const items = await this._checklistRepo.find({
       where: { serviceId, deletedDate: IsNull() },
       relations: ['requirement'],
       order: { sort: 'ASC' },
     });
 
-    return {
-      success: true,
-      message: 'Checklist items for service retrieved successfully',
-      data: items,
-    };
+    return items;
   }
 
   async update(id: string, dto: UpdateServiceChecklistDto): Promise<CommonResponse<ServiceChecklistEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Checklist item with ID ${id} not found`);
+    }
+
     const item = await this._checklistRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });
@@ -149,9 +152,37 @@ export class ServiceChecklistService {
     };
   }
 
-  async reorder(items: ReorderItemDto[]): Promise<CommonResponse> {
+  async updateStatus(id: string, isActive: boolean): Promise<CommonResponse<ServiceChecklistEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Checklist item with ID ${id} not found`);
+    }
+
+    const item = await this._checklistRepo.findOne({
+      where: { id, deletedDate: IsNull() },
+    });
+
+    if (!item) {
+      throw new NotFoundException(`Checklist item with ID ${id} not found`);
+    }
+
+    item.isActive = isActive;
+    item.updatedDate = new Date();
+
+    const saved = await this._checklistRepo.save(item);
+    return {
+      success: true,
+      message: 'Service checklist status updated successfully',
+      data: saved,
+    };
+  }
+
+  async reorder(items: ReorderItemDto[], serviceId?: string): Promise<CommonResponse> {
     for (const item of items) {
-      await this._checklistRepo.update(item.id, { sort: item.sort, updatedDate: new Date() });
+      const criteria: Record<string, unknown> = { id: item.id };
+      if (serviceId) {
+        criteria.serviceId = serviceId;
+      }
+      await this._checklistRepo.update(criteria, { sort: item.sort, updatedDate: new Date() });
     }
 
     return {
@@ -160,7 +191,38 @@ export class ServiceChecklistService {
     };
   }
 
+  async deleteByServiceId(serviceId: string, confirmed?: boolean): Promise<CommonResponse> {
+    if (!isUUID(serviceId)) {
+      throw new NotFoundException(`Service with ID ${serviceId} not found`);
+    }
+
+    if (!confirmed) {
+      return {
+        success: true,
+        message: 'Checklist is ready for deletion.',
+        data: { inUse: false },
+      };
+    }
+
+    await this._checklistRepo
+      .createQueryBuilder()
+      .update(ServiceChecklistEntity)
+      .set({ deletedDate: new Date() })
+      .where('serviceId = :serviceId', { serviceId })
+      .andWhere('deletedDate IS NULL')
+      .execute();
+
+    return {
+      success: true,
+      message: 'Service checklist items deleted successfully',
+    };
+  }
+
   async delete(id: string): Promise<CommonResponse> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Checklist item with ID ${id} not found`);
+    }
+
     const item = await this._checklistRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });

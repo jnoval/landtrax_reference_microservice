@@ -73,11 +73,57 @@ describe('ServiceChecklistService', () => {
     expect(mockChecklistRepo.update).toHaveBeenCalledTimes(2);
   });
 
-  it('deletes checklist item', async () => {
-    mockChecklistRepo.findOne.mockResolvedValue({ id: 'item-1', deletedDate: null });
+  it('finds items by service ID and returns array directly', async () => {
+    mockChecklistRepo.find.mockResolvedValue([{ id: 'chk-1', serviceId: 'svc-1' }]);
 
-    const res = await service.delete('item-1');
+    const res: any = await service.findByServiceId('svc-1');
+    expect(Array.isArray(res)).toBe(true);
+    expect(res).toHaveLength(1);
+    expect(res[0].id).toBe('chk-1');
+  });
+
+  it('updates status of checklist item', async () => {
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+    mockChecklistRepo.findOne.mockResolvedValue({ id: validId, isActive: false });
+
+    const res = await (service as any).updateStatus(validId, true);
     expect(res.success).toBe(true);
     expect(mockChecklistRepo.save).toHaveBeenCalled();
+  });
+
+  it('throws NotFoundException on findOne when id is invalid UUID', async () => {
+    await expect(service.findOne('active')).rejects.toThrow(NotFoundException);
+    expect(mockChecklistRepo.findOne).not.toHaveBeenCalled();
+  });
+
+  it('deletes checklist item', async () => {
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+    mockChecklistRepo.findOne.mockResolvedValue({ id: validId, deletedDate: null });
+
+    const res = await service.delete(validId);
+    expect(res.success).toBe(true);
+    expect(mockChecklistRepo.save).toHaveBeenCalled();
+  });
+
+  it('checks checklist readiness when confirmed is false in deleteByServiceId', async () => {
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+    const res = await service.deleteByServiceId(validId, false);
+    expect(res.success).toBe(true);
+  });
+
+  it('executes deletion when confirmed is true in deleteByServiceId', async () => {
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+    const mockQb = {
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue({ affected: 3 }),
+    };
+    mockChecklistRepo.createQueryBuilder.mockReturnValue(mockQb);
+
+    const res = await service.deleteByServiceId(validId, true);
+    expect(res.success).toBe(true);
+    expect(mockQb.execute).toHaveBeenCalled();
   });
 });

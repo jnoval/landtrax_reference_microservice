@@ -63,18 +63,34 @@ describe('RequirementMappingService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
-  it('finds by service ID', async () => {
-    mockMappingRepo.find.mockResolvedValue([{ id: 'map-1' }]);
+  it('finds by service ID, returns array directly, and attaches targetRequirement', async () => {
+    mockMappingRepo.find.mockResolvedValue([
+      { id: 'map-1', serviceId: 'svc-1', targetRequirementId: 'tgt-req-1' },
+    ]);
+    mockReqRepo.find = jest.fn().mockResolvedValue([
+      { id: 'tgt-req-1', name: 'Valid ID Target', placeholder: 'Enter valid ID' },
+    ]);
 
-    const res = await service.findByServiceId('svc-1');
-    expect(res.success).toBe(true);
-    expect(res.data?.length).toBe(1);
+    const res: any = await service.findByServiceId('svc-1');
+    expect(Array.isArray(res)).toBe(true);
+    expect(res).toHaveLength(1);
+    expect(res[0].targetRequirement).toEqual({
+      id: 'tgt-req-1',
+      name: 'Valid ID Target',
+      placeholder: 'Enter valid ID',
+    });
+  });
+
+  it('throws NotFoundException on findOne when id is invalid UUID', async () => {
+    await expect(service.findOne('active')).rejects.toThrow(NotFoundException);
+    expect(mockMappingRepo.findOne).not.toHaveBeenCalled();
   });
 
   it('deletes requirement mapping', async () => {
-    mockMappingRepo.findOne.mockResolvedValue({ id: 'map-1', deletedDate: null });
+    const validId = 'a0000000-0000-0000-0000-000000000001';
+    mockMappingRepo.findOne.mockResolvedValue({ id: validId, deletedDate: null });
 
-    const res = await service.delete('map-1');
+    const res = await service.delete(validId);
     expect(res.success).toBe(true);
     expect(mockMappingRepo.save).toHaveBeenCalled();
   });

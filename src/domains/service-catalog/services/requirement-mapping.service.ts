@@ -1,14 +1,12 @@
 import {
   ConflictException,
-  HttpException,
-  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
-import { uuidv4 } from '../../../shared/utils/uuid';
+import { isUUID, uuidv4 } from '../../../shared/utils/uuid';
 import { CommonResponse, CustomMeta } from '../../../shared/common';
 import RequirementEntity from '../../../shared/infrastructure/database/entities/requirement.entity';
 import RequirementMappingEntity from '../../../shared/infrastructure/database/entities/requirement-mapping.entity';
@@ -103,6 +101,10 @@ export class RequirementMappingService {
   }
 
   async findOne(id: string): Promise<CommonResponse<RequirementMappingEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Requirement mapping with ID ${id} not found`);
+    }
+
     const mapping = await this._mappingRepo.findOne({
       where: { id, deletedDate: IsNull() },
       relations: ['sourceRequirement', 'service'],
@@ -119,50 +121,61 @@ export class RequirementMappingService {
     };
   }
 
-  async findByServiceId(serviceId: string): Promise<CommonResponse<RequirementMappingEntity[]>> {
+  async findByServiceId(serviceId: string): Promise<RequirementMappingEntity[]> {
     const mappings = await this._mappingRepo.find({
       where: { serviceId, deletedDate: IsNull() },
       relations: ['sourceRequirement'],
       order: { priority: 'ASC' },
     });
 
-    return {
-      success: true,
-      message: 'Requirement mappings for service retrieved successfully',
-      data: mappings,
-    };
+    const targetRequirementIds = [
+      ...new Set(mappings.map((m) => m.targetRequirementId).filter(Boolean)),
+    ];
+    if (targetRequirementIds.length > 0) {
+      const targets = await this._requirementRepo.find({
+        where: { id: In(targetRequirementIds) },
+        select: ['id', 'name', 'placeholder'],
+      });
+      const targetMap = new Map(targets.map((t) => [t.id, t]));
+      mappings.forEach((mapping) => {
+        const target = targetMap.get(mapping.targetRequirementId);
+        if (target) {
+          (mapping as any).targetRequirement = {
+            id: target.id,
+            name: target.name,
+            placeholder: target.placeholder,
+          };
+        }
+      });
+    }
+
+    return mappings;
   }
 
-  async findBySourceRequirement(sourceRequirementId: string): Promise<CommonResponse<RequirementMappingEntity[]>> {
-    const mappings = await this._mappingRepo.find({
+  async findBySourceRequirement(sourceRequirementId: string): Promise<RequirementMappingEntity[]> {
+    return await this._mappingRepo.find({
       where: { sourceRequirementId, deletedDate: IsNull() },
       relations: ['service'],
+      order: { priority: 'ASC' },
     });
-
-    return {
-      success: true,
-      message: 'Requirement mappings for source requirement retrieved successfully',
-      data: mappings,
-    };
   }
 
-  async findByTargetRequirement(targetRequirementId: string): Promise<CommonResponse<RequirementMappingEntity[]>> {
-    const mappings = await this._mappingRepo.find({
+  async findByTargetRequirement(targetRequirementId: string): Promise<RequirementMappingEntity[]> {
+    return await this._mappingRepo.find({
       where: { targetRequirementId, deletedDate: IsNull() },
       relations: ['sourceRequirement', 'service'],
+      order: { priority: 'ASC' },
     });
-
-    return {
-      success: true,
-      message: 'Requirement mappings for target requirement retrieved successfully',
-      data: mappings,
-    };
   }
 
   async update(
     id: string,
     dto: UpdateRequirementMappingDto,
   ): Promise<CommonResponse<RequirementMappingEntity>> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Requirement mapping with ID ${id} not found`);
+    }
+
     const mapping = await this._mappingRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });
@@ -185,6 +198,10 @@ export class RequirementMappingService {
   }
 
   async delete(id: string): Promise<CommonResponse> {
+    if (!isUUID(id)) {
+      throw new NotFoundException(`Requirement mapping with ID ${id} not found`);
+    }
+
     const mapping = await this._mappingRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });

@@ -17,6 +17,7 @@ describe('ServiceCatalogController', () => {
       bulkUpdateStatus: jest.fn().mockResolvedValue({ success: true, message: 'Bulk status updated' }),
       delete: jest.fn().mockResolvedValue({ success: true, message: 'Deleted' }),
       bulkDelete: jest.fn().mockResolvedValue({ success: true, message: 'Bulk deleted' }),
+      getChecklist: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -42,6 +43,12 @@ describe('ServiceCatalogController', () => {
     expect(mockService.findAll).toHaveBeenCalledWith({ page: 1 });
   });
 
+  it('delegates getActiveCatalogs to service with isActive: true', async () => {
+    const res = await controller.getActiveCatalogs({ page: 1, limit: 1000 });
+    expect(res.success).toBe(true);
+    expect(mockService.findAll).toHaveBeenCalledWith({ page: 1, limit: 1000, isActive: true });
+  });
+
   it('delegates findOne to service', async () => {
     const res = await controller.findOne('svc-1');
     expect((res as any).data.id).toBe('svc-1');
@@ -63,5 +70,10 @@ describe('ServiceCatalogController', () => {
     const res = await controller.delete('svc-1');
     expect(res.success).toBe(true);
     expect(mockService.delete).toHaveBeenCalledWith('svc-1');
+  });
+
+  it('delegates getChecklist to checklistService or service', async () => {
+    const res = await (controller as any).getChecklist('svc-1');
+    expect(res).toBeDefined();
   });
 });

@@ -42,9 +42,24 @@ describe('RequirementMappingController', () => {
   });
 
   it('delegates findByServiceId to service', async () => {
+    mockService.findByServiceId.mockResolvedValue([]);
     const res = await controller.findByServiceId('svc-1');
-    expect(res.success).toBe(true);
+    expect(Array.isArray(res)).toBe(true);
     expect(mockService.findByServiceId).toHaveBeenCalledWith('svc-1');
+  });
+
+  it('delegates findBySourceRequirement to service', async () => {
+    mockService.findBySourceRequirement.mockResolvedValue([]);
+    const res = await controller.findBySourceRequirement('req-1');
+    expect(Array.isArray(res)).toBe(true);
+    expect(mockService.findBySourceRequirement).toHaveBeenCalledWith('req-1');
+  });
+
+  it('delegates findByTargetRequirement to service', async () => {
+    mockService.findByTargetRequirement.mockResolvedValue([]);
+    const res = await controller.findByTargetRequirement('req-2');
+    expect(Array.isArray(res)).toBe(true);
+    expect(mockService.findByTargetRequirement).toHaveBeenCalledWith('req-2');
   });
 
   it('delegates update to service', async () => {

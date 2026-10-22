@@ -36,8 +36,9 @@ describe('ServiceChecklistController', () => {
   });
 
   it('delegates findByServiceId to service', async () => {
+    mockService.findByServiceId.mockResolvedValue([]);
     const res = await controller.findByServiceId('s1');
-    expect(res.success).toBe(true);
+    expect(Array.isArray(res)).toBe(true);
     expect(mockService.findByServiceId).toHaveBeenCalledWith('s1');
   });
 
@@ -57,5 +58,19 @@ describe('ServiceChecklistController', () => {
     const res = await controller.delete('c1');
     expect(res.success).toBe(true);
     expect(mockService.delete).toHaveBeenCalledWith('c1');
+  });
+
+  it('delegates reorderByService to service', async () => {
+    mockService.reorder = jest.fn().mockResolvedValue({ success: true });
+    const res = await (controller as any).reorderByService('s1', { items: [{ id: 'c1', sort: 1 }] });
+    expect(res.success).toBe(true);
+    expect(mockService.reorder).toHaveBeenCalledWith([{ id: 'c1', sort: 1 }], 's1');
+  });
+
+  it('delegates updateStatus to service', async () => {
+    mockService.updateStatus = jest.fn().mockResolvedValue({ success: true });
+    const res = await (controller as any).updateStatus('c1', { isActive: true });
+    expect(res.success).toBe(true);
+    expect(mockService.updateStatus).toHaveBeenCalledWith('c1', true);
   });
 });
