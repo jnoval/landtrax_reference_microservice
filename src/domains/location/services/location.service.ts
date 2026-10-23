@@ -124,7 +124,7 @@ export class LocationService {
 
   async findByCompanyUser(userId: string): Promise<RegistryOfDeedEntity[]> {
     try {
-      const rows = await this._registryRepo.query(
+      const rows = await this._registryRepo.manager.query(
         `SELECT DISTINCT rod.Id, rod.Name, rod.Abbreviation, rod.Address, rod.IsActive
          FROM RegistryOfDeed rod
          WHERE rod.Id IN (
