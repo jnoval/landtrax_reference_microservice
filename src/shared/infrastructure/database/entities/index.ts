@@ -1,7 +1,7 @@
 import { CategoryEntity } from './category.entity';
 import FAQEntity from './faq.entity';
 import { BaseEntity, LineEntity } from './general.entity';
-import { RegistryOfDeedEntity } from './registry-of-deed.entity';
+import { LocationEntity } from './location.entity';
 import RequirementMappingEntity from './requirement-mapping.entity';
 import RequirementEntity from './requirement.entity';
 import ServiceEntity from './service-catalog.entity';
@@ -15,7 +15,7 @@ export const Entities = {
   RequirementEntity,
   RequirementMappingEntity,
   SystemSettingEntity,
-  RegistryOfDeedEntity,
+  LocationEntity,
   FAQEntity,
 };
 
@@ -28,7 +28,7 @@ export {
   RequirementEntity,
   RequirementMappingEntity,
   SystemSettingEntity,
-  RegistryOfDeedEntity,
+  LocationEntity,
   FAQEntity,
 };
 

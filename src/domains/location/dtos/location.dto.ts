@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class CreateRegistryOfDeedDto {
-  @ApiProperty({ description: 'Registry of Deed name', example: 'Quezon City Register of Deeds' })
-  @IsNotEmpty({ message: 'Registry of Deeds Name is required.' })
+export class CreateLocationDto {
+  @ApiProperty({ description: 'Location name', example: 'Quezon City Register of Deeds' })
+  @IsNotEmpty({ message: 'Location Name is required.' })
   @IsString()
   name!: string;
 
@@ -12,7 +12,7 @@ export class CreateRegistryOfDeedDto {
   @IsString()
   abbreviation?: string | null;
 
-  @ApiPropertyOptional({ description: 'Address of the Registry of Deeds office' })
+  @ApiPropertyOptional({ description: 'Address of the location office' })
   @IsOptional()
   @IsString()
   address?: string | null;
@@ -23,4 +23,4 @@ export class CreateRegistryOfDeedDto {
   isActive!: boolean;
 }
 
-export class UpdateRegistryOfDeedDto extends PartialType(CreateRegistryOfDeedDto) {}
+export class UpdateLocationDto extends PartialType(CreateLocationDto) {}

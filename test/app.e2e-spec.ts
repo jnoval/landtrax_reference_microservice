@@ -27,7 +27,7 @@ import { GatewayUserGuard } from '../src/shared/guards/gateway-user.guard';
 import { PermissionGuard } from '../src/shared/guards/permission.guard';
 import { CategoryEntity } from '../src/shared/infrastructure/database/entities/category.entity';
 import { FAQEntity } from '../src/shared/infrastructure/database/entities/faq.entity';
-import { RegistryOfDeedEntity } from '../src/shared/infrastructure/database/entities/registry-of-deed.entity';
+import { LocationEntity } from '../src/shared/infrastructure/database/entities/location.entity';
 import { RequirementMappingEntity } from '../src/shared/infrastructure/database/entities/requirement-mapping.entity';
 import { RequirementEntity } from '../src/shared/infrastructure/database/entities/requirement.entity';
 import { ServiceEntity } from '../src/shared/infrastructure/database/entities/service-catalog.entity';
@@ -139,7 +139,7 @@ describe('Reference Microservice (e2e)', () => {
         { provide: getRepositoryToken(RequirementEntity), useValue: mockRepo },
         { provide: getRepositoryToken(RequirementMappingEntity), useValue: mockRepo },
         { provide: getRepositoryToken(SystemSettingEntity), useValue: mockRepo },
-        { provide: getRepositoryToken(RegistryOfDeedEntity), useValue: mockRepo },
+        { provide: getRepositoryToken(LocationEntity), useValue: mockRepo },
         { provide: getRepositoryToken(FAQEntity), useValue: mockRepo },
         { provide: RedisCacheService, useValue: mockRedisService },
         { provide: AuditTrailService, useValue: mockAuditTrailService },
@@ -276,10 +276,10 @@ describe('Reference Microservice (e2e)', () => {
     });
   });
 
-  describe('Location (Registry of Deed) Endpoints', () => {
-    it('/registry-of-deed (GET) returns locations', () => {
+  describe('Location Endpoints', () => {
+    it('/location (GET) returns locations', () => {
       return request(app.getHttpServer())
-        .get('/registry-of-deed')
+        .get('/location')
         .set(gatewayHeaders)
         .expect(200)
         .expect((res) => {
@@ -287,9 +287,9 @@ describe('Reference Microservice (e2e)', () => {
         });
     });
 
-    it('/registry-of-deed/active (GET) returns active lookup', () => {
+    it('/location/active (GET) returns active lookup', () => {
       return request(app.getHttpServer())
-        .get('/registry-of-deed/active')
+        .get('/location/active')
         .set(gatewayHeaders)
         .expect(200)
         .expect((res) => {
