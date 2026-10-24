@@ -17,19 +17,19 @@ import { Public } from '../../../shared/decorators/public.decorator';
 import { ReqContext, RequestContextDto } from '../../../shared/decorators/req-context.decorator';
 import { GatewayUserGuard } from '../../../shared/guards/gateway-user.guard';
 import { PermissionGuard } from '../../../shared/guards/permission.guard';
-import { CreateRegistryOfDeedDto, UpdateRegistryOfDeedDto } from '../dtos/location.dto';
+import { CreateLocationDto, UpdateLocationDto } from '../dtos/location.dto';
 import { LocationService } from '../services/location.service';
 
-@ApiTags('Registry of Deed')
+@ApiTags('Location')
 @UseGuards(GatewayUserGuard, PermissionGuard)
-@Controller('registry-of-deed')
-@Audit('Registry of Deed')
+@Controller('location')
+@Audit('Location')
 export class LocationController {
   constructor(private readonly _locationService: LocationService) {}
 
   @Public()
   @Get('active')
-  @ApiOperation({ summary: 'Get all active registry of deeds (public, for dropdowns)' })
+  @ApiOperation({ summary: 'Get all active locations (public, for dropdowns)' })
   async findAllActive() {
     return await this._locationService.findAllActive();
   }
@@ -42,15 +42,15 @@ export class LocationController {
 
   @Post()
   @PermissionRequired('Create Location')
-  @AuditDescription("Defined and created a new registry of deed: '{name}'")
-  @ApiOperation({ summary: 'Create a new Registry of Deed' })
-  async create(@ReqContext() req: RequestContextDto, @Body() data: CreateRegistryOfDeedDto) {
+  @AuditDescription("Defined and created a new location: '{name}'")
+  @ApiOperation({ summary: 'Create a new Location' })
+  async create(@ReqContext() req: RequestContextDto, @Body() data: CreateLocationDto) {
     return await this._locationService.create(data, req.userId);
   }
 
   @Get()
   @PermissionRequired('View Location')
-  @ApiOperation({ summary: 'Get all registry of deeds (paginated)' })
+  @ApiOperation({ summary: 'Get all locations (paginated)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
@@ -63,41 +63,41 @@ export class LocationController {
   }
 
   @Get('all-active')
-  @ApiOperation({ summary: 'Get all registry of deeds' })
+  @ApiOperation({ summary: 'Get all locations' })
   async getAllActive() {
     return await this._locationService.findAllGet();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a registry of deed by id' })
+  @ApiOperation({ summary: 'Get a location by id' })
   async findOne(@Param('id') id: string) {
     return await this._locationService.findOne(id);
   }
 
   @Patch(':id')
   @PermissionRequired('Edit Location')
-  @AuditDescription("Updated configurations for registry of deed '{identifier}'")
-  @ApiOperation({ summary: 'Update a registry of deed' })
+  @AuditDescription("Updated configurations for location '{identifier}'")
+  @ApiOperation({ summary: 'Update a location' })
   async update(
     @ReqContext() req: RequestContextDto,
     @Param('id') id: string,
-    @Body() data: UpdateRegistryOfDeedDto,
+    @Body() data: UpdateLocationDto,
   ) {
     return await this._locationService.update(id, data, req.userId);
   }
 
   @Patch('status/:id')
   @PermissionRequired('Edit Location')
-  @AuditDescription("Toggled status for registry of deed '{identifier}'")
-  @ApiOperation({ summary: 'Toggle status of a registry of deed' })
+  @AuditDescription("Toggled status for location '{identifier}'")
+  @ApiOperation({ summary: 'Toggle status of a location' })
   async updateStatus(@ReqContext() req: RequestContextDto, @Param('id') id: string) {
     return await this._locationService.updateStatus(id, req.userId);
   }
 
   @Delete(':id')
   @PermissionRequired('Delete Location')
-  @AuditDescription("Removed registry of deed '{identifier}'")
-  @ApiOperation({ summary: 'Delete a registry of deed' })
+  @AuditDescription("Removed location '{identifier}'")
+  @ApiOperation({ summary: 'Delete a location' })
   async delete(@ReqContext() req: RequestContextDto, @Param('id') id: string) {
     return await this._locationService.remove(id, req.userId);
   }

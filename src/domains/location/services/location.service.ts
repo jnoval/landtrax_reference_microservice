@@ -1,4 +1,4 @@
-import {
+﻿import {
   ConflictException,
   Injectable,
   Logger,
@@ -7,24 +7,24 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { CommonResponse, CustomMeta } from '../../../shared/common';
-import { RegistryOfDeedEntity } from '../../../shared/infrastructure/database/entities/registry-of-deed.entity';
+import { LocationEntity } from '../../../shared/infrastructure/database/entities/location.entity';
 import { RedisCacheService } from '../../../shared/infrastructure/redis/redis-cache.service';
 import { uuidv4 } from '../../../shared/utils/uuid';
-import { CreateRegistryOfDeedDto, UpdateRegistryOfDeedDto } from '../dtos/location.dto';
+import { CreateLocationDto, UpdateLocationDto } from '../dtos/location.dto';
 
 @Injectable()
 export class LocationService {
   private readonly _logger = new Logger(LocationService.name);
-  private static readonly ACTIVE_CACHE_KEY = 'location:registry_of_deed:active';
+  private static readonly ACTIVE_CACHE_KEY = 'location:active';
 
   constructor(
-    @InjectRepository(RegistryOfDeedEntity)
-    private readonly _registryRepo: Repository<RegistryOfDeedEntity>,
+    @InjectRepository(LocationEntity)
+    private readonly _locationRepo: Repository<LocationEntity>,
     private readonly _redisService: RedisCacheService,
   ) {}
 
-  async create(data: CreateRegistryOfDeedDto, createdBy: string): Promise<CommonResponse<RegistryOfDeedEntity>> {
-    const isDuplicate = await this._registryRepo.findOne({
+  async create(data: CreateLocationDto, createdBy: string): Promise<CommonResponse<LocationEntity>> {
+    const isDuplicate = await this._locationRepo.findOne({
       where: { name: data.name, deletedDate: IsNull() },
     });
 
@@ -32,7 +32,7 @@ export class LocationService {
       throw new ConflictException(`Location with name of ${data.name} already exists.`);
     }
 
-    const entity = this._registryRepo.create({
+    const entity = this._locationRepo.create({
       id: uuidv4(),
       createdBy,
       createdDate: new Date(),
@@ -42,7 +42,7 @@ export class LocationService {
       isActive: data.isActive,
     });
 
-    const response = await this._registryRepo.save(entity);
+    const response = await this._locationRepo.save(entity);
     await this._redisService.del(LocationService.ACTIVE_CACHE_KEY);
 
     return {
@@ -52,13 +52,13 @@ export class LocationService {
     };
   }
 
-  async findAllActive(): Promise<RegistryOfDeedEntity[]> {
-    const cached = await this._redisService.get<RegistryOfDeedEntity[]>(LocationService.ACTIVE_CACHE_KEY);
+  async findAllActive(): Promise<LocationEntity[]> {
+    const cached = await this._redisService.get<LocationEntity[]>(LocationService.ACTIVE_CACHE_KEY);
     if (cached) {
       return cached;
     }
 
-    const data = await this._registryRepo.find({
+    const data = await this._locationRepo.find({
       where: {
         isActive: true,
         deletedDate: IsNull(),
@@ -70,11 +70,11 @@ export class LocationService {
     return data;
   }
 
-  async findAllGet(): Promise<RegistryOfDeedEntity[]> {
-    return await this._registryRepo
-      .createQueryBuilder('registry')
-      .where('registry.deletedDate IS NULL')
-      .orderBy('registry.name', 'ASC')
+  async findAllGet(): Promise<LocationEntity[]> {
+    return await this._locationRepo
+      .createQueryBuilder('location')
+      .where('location.deletedDate IS NULL')
+      .orderBy('location.name', 'ASC')
       .getMany();
   }
 
@@ -82,20 +82,20 @@ export class LocationService {
     page: number = 1,
     limit: number = 10,
     search?: string,
-  ): Promise<{ data: RegistryOfDeedEntity[]; meta: CustomMeta }> {
+  ): Promise<{ data: LocationEntity[]; meta: CustomMeta }> {
     const skip = (page - 1) * limit;
 
-    const qb = this._registryRepo
-      .createQueryBuilder('registry')
-      .where('registry.deletedDate IS NULL');
+    const qb = this._locationRepo
+      .createQueryBuilder('location')
+      .where('location.deletedDate IS NULL');
 
     if (search) {
-      qb.andWhere('(registry.name LIKE :search OR registry.abbreviation LIKE :search)', {
+      qb.andWhere('(location.name LIKE :search OR location.abbreviation LIKE :search)', {
         search: `%${search}%`,
       });
     }
 
-    qb.orderBy('registry.name', 'ASC');
+    qb.orderBy('location.name', 'ASC');
 
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
@@ -110,8 +110,8 @@ export class LocationService {
     };
   }
 
-  async findOne(id: string): Promise<RegistryOfDeedEntity> {
-    const entity = await this._registryRepo.findOne({
+  async findOne(id: string): Promise<LocationEntity> {
+    const entity = await this._locationRepo.findOne({
       where: { id, deletedDate: IsNull() },
     });
 
@@ -122,11 +122,11 @@ export class LocationService {
     return entity;
   }
 
-  async findByCompanyUser(userId: string): Promise<RegistryOfDeedEntity[]> {
+  async findByCompanyUser(userId: string): Promise<LocationEntity[]> {
     try {
-      const rows = await this._registryRepo.query(
+      const rows = await this._locationRepo.manager.query(
         `SELECT DISTINCT rod.Id, rod.Name, rod.Abbreviation, rod.Address, rod.IsActive
-         FROM RegistryOfDeed rod
+         FROM [Location] rod
          WHERE rod.Id IN (
            SELECT u.RegistryOfDeedId
            FROM [User] u
@@ -151,13 +151,13 @@ export class LocationService {
 
   async update(
     id: string,
-    data: UpdateRegistryOfDeedDto,
+    data: UpdateLocationDto,
     updatedBy: string,
-  ): Promise<CommonResponse<RegistryOfDeedEntity>> {
+  ): Promise<CommonResponse<LocationEntity>> {
     const entity = await this.findOne(id);
 
     if (data.name && data.name !== entity.name) {
-      const isDuplicate = await this._registryRepo.findOne({
+      const isDuplicate = await this._locationRepo.findOne({
         where: { name: data.name, id: Not(id), deletedDate: IsNull() },
       });
       if (isDuplicate) {
@@ -171,7 +171,7 @@ export class LocationService {
       updatedDate: new Date(),
     });
 
-    const saved = await this._registryRepo.save(entity);
+    const saved = await this._locationRepo.save(entity);
     await this._redisService.del(LocationService.ACTIVE_CACHE_KEY);
 
     return {
@@ -181,13 +181,13 @@ export class LocationService {
     };
   }
 
-  async updateStatus(id: string, updatedBy: string): Promise<CommonResponse<RegistryOfDeedEntity>> {
+  async updateStatus(id: string, updatedBy: string): Promise<CommonResponse<LocationEntity>> {
     const entity = await this.findOne(id);
     entity.isActive = !entity.isActive;
     entity.updatedBy = updatedBy;
     entity.updatedDate = new Date();
 
-    const saved = await this._registryRepo.save(entity);
+    const saved = await this._locationRepo.save(entity);
     await this._redisService.del(LocationService.ACTIVE_CACHE_KEY);
 
     return {
@@ -202,7 +202,7 @@ export class LocationService {
 
     entity.deletedBy = deletedBy;
     entity.deletedDate = new Date();
-    await this._registryRepo.save(entity);
+    await this._locationRepo.save(entity);
     await this._redisService.del(LocationService.ACTIVE_CACHE_KEY);
 
     return {

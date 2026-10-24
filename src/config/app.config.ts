@@ -24,6 +24,9 @@ export const getTypeOrmConfig = (configService: ConfigService): any => {
       trustServerCertificate: true,
     },
     logging: process.env.ENABLE_QUERY_LOGGING === 'true' ? ['query', 'error'] : false,
+    migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+    migrationsTableName: 'migrations',
+    migrationsRun: true,
     retryAttempts: 10,
     retryDelay: 3000,
   };
@@ -38,6 +41,8 @@ export default new DataSource({
   database: process.env.DB_NAME,
   entities: Object.values(Entities),
   synchronize: false,
+  migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+  migrationsTableName: 'migrations',
   options: {
     enableArithAbort: true,
     trustServerCertificate: true,

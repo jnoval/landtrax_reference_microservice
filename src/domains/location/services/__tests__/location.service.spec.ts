@@ -1,7 +1,7 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { RegistryOfDeedEntity } from 'src/shared/infrastructure/database/entities/registry-of-deed.entity';
+import { LocationEntity } from 'src/shared/infrastructure/database/entities/location.entity';
 import { RedisCacheService } from 'src/shared/infrastructure/redis/redis-cache.service';
 import { LocationService } from '../location.service';
 
@@ -29,7 +29,7 @@ describe('LocationService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LocationService,
-        { provide: getRepositoryToken(RegistryOfDeedEntity), useValue: mockRepo },
+        { provide: getRepositoryToken(LocationEntity), useValue: mockRepo },
         { provide: RedisCacheService, useValue: mockRedis },
       ],
     }).compile();
@@ -38,7 +38,7 @@ describe('LocationService', () => {
   });
 
   describe('create', () => {
-    it('creates registry of deed and clears active cache', async () => {
+    it('creates location and clears active cache', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
       const res = await service.create(
@@ -53,7 +53,7 @@ describe('LocationService', () => {
 
       expect(res.success).toBe(true);
       expect(mockRepo.save).toHaveBeenCalled();
-      expect(mockRedis.del).toHaveBeenCalledWith('location:registry_of_deed:active');
+      expect(mockRedis.del).toHaveBeenCalledWith('location:active');
     });
 
     it('rejects duplicate location name', async () => {
@@ -77,7 +77,7 @@ describe('LocationService', () => {
 
       const res = await service.findAllActive();
       expect(res.length).toBe(1);
-      expect(mockRedis.get).toHaveBeenCalledWith('location:registry_of_deed:active');
+      expect(mockRedis.get).toHaveBeenCalledWith('location:active');
       expect(mockRepo.find).not.toHaveBeenCalled();
     });
 
@@ -88,7 +88,7 @@ describe('LocationService', () => {
       const res = await service.findAllActive();
       expect(res.length).toBe(1);
       expect(mockRedis.set).toHaveBeenCalledWith(
-        'location:registry_of_deed:active',
+        'location:active',
         expect.any(Array),
         600,
       );

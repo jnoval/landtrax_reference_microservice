@@ -46,6 +46,6 @@ export enum ENTITY {
   TRANSACTION = 'Transaction',
   AUDIT_TRAIL = 'AuditTrail',
   SYSTEM_SETTINGS = 'SystemSettings',
-  REGISTRY_OF_DEED = 'RegistryOfDeed',
+  LOCATION = 'Location',
   LANDTRAX_ADDRESS = 'LandtraxAddress',
 }

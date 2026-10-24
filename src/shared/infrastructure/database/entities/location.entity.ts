@@ -2,8 +2,8 @@ import { Column, Entity } from 'typeorm';
 import { ENTITY } from '../models/general-model';
 import { BaseEntity } from './general.entity';
 
-@Entity(ENTITY.REGISTRY_OF_DEED)
-export class RegistryOfDeedEntity extends BaseEntity {
+@Entity(ENTITY.LOCATION)
+export class LocationEntity extends BaseEntity {
   @Column({ name: 'Name', type: 'varchar', length: 255, nullable: false, unique: true })
   name!: string;
 
