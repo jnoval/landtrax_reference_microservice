@@ -1,6 +1,8 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { ENTITY } from '../models/general-model';
 import { BaseEntity } from './general.entity';
+import TransactionEntity from './transaction.entity';
+import UserEntity from './user.entity';
 
 @Entity(ENTITY.LOCATION)
 export class LocationEntity extends BaseEntity {
@@ -15,4 +17,10 @@ export class LocationEntity extends BaseEntity {
 
   @Column({ name: 'IsActive', type: 'bit', nullable: false, default: true })
   isActive!: boolean;
+
+  @OneToMany(() => UserEntity, (user) => user.location, { eager: false })
+  users?: UserEntity[];
+
+  @OneToMany(() => TransactionEntity, (transaction) => transaction.location, { eager: false })
+  transactions?: TransactionEntity[];
 }

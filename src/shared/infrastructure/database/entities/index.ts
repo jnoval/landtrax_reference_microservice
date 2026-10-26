@@ -7,6 +7,9 @@ import RequirementEntity from './requirement.entity';
 import ServiceEntity from './service-catalog.entity';
 import ServiceChecklistEntity from './service-checklist.entity';
 import SystemSettingEntity from './system-setting.entity';
+import TransactionEntity from './transaction.entity';
+import UserEntity from './user.entity';
+import UserCompanyEntity from './user-company.entity';
 
 export const Entities = {
   CategoryEntity,
@@ -17,6 +20,9 @@ export const Entities = {
   SystemSettingEntity,
   LocationEntity,
   FAQEntity,
+  UserEntity,
+  UserCompanyEntity,
+  TransactionEntity,
 };
 
 export {
@@ -30,6 +36,9 @@ export {
   SystemSettingEntity,
   LocationEntity,
   FAQEntity,
+  UserEntity,
+  UserCompanyEntity,
+  TransactionEntity,
 };
 
 export default Entities;

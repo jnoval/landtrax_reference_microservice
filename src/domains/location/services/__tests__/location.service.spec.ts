@@ -16,8 +16,10 @@ describe('LocationService', () => {
       save: jest.fn((e) => Promise.resolve({ id: 'loc-1', ...e })),
       findOne: jest.fn(),
       find: jest.fn(),
-      query: jest.fn(),
       createQueryBuilder: jest.fn(),
+      manager: {
+        getRepository: jest.fn(),
+      },
     };
 
     mockRedis = {
@@ -92,6 +94,62 @@ describe('LocationService', () => {
         expect.any(Array),
         600,
       );
+    });
+  });
+
+  describe('findByCompanyUser', () => {
+    const mockQueryBuilder = (rows: any[]) => {
+      const qb: any = {
+        innerJoin: jest.fn(() => qb),
+        where: jest.fn(() => qb),
+        andWhere: jest.fn(() => qb),
+        orderBy: jest.fn(() => qb),
+        getMany: jest.fn().mockResolvedValue(rows),
+      };
+      return qb;
+    };
+
+    it('returns locations assigned to any user of the requester company', async () => {
+      const membershipRepo = { findOne: jest.fn().mockResolvedValue({ companyId: 'company-1' }) };
+      mockRepo.manager.getRepository.mockReturnValue(membershipRepo);
+      const qb = mockQueryBuilder([
+        { id: 'loc-1', name: 'QC RD' },
+        { id: 'loc-1', name: 'QC RD' },
+        { id: 'loc-2', name: 'Manila RD' },
+      ]);
+      mockRepo.createQueryBuilder.mockReturnValue(qb);
+
+      const res = await service.findByCompanyUser('u1');
+
+      expect(mockRepo.manager.getRepository).toHaveBeenCalled();
+      expect(mockRepo.createQueryBuilder).toHaveBeenCalledWith('location');
+      expect(qb.innerJoin).toHaveBeenCalledWith('location.users', 'user');
+      expect(qb.innerJoin).toHaveBeenCalledWith('user.userCompanies', 'userCompany');
+      expect(qb.where).toHaveBeenCalledWith('userCompany.companyId = :companyId', {
+        companyId: 'company-1',
+      });
+      expect(res.map((r) => r.id)).toEqual(['loc-1', 'loc-2']);
+    });
+
+    it('returns empty list when the requester has no company membership', async () => {
+      mockRepo.manager.getRepository.mockReturnValue({ findOne: jest.fn().mockResolvedValue(null) });
+
+      const res = await service.findByCompanyUser('u1');
+
+      expect(res).toEqual([]);
+      expect(mockRepo.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('falls back to active locations when the query fails', async () => {
+      mockRepo.manager.getRepository.mockReturnValue({
+        findOne: jest.fn().mockRejectedValue(new Error('boom')),
+      });
+      mockRedis.get.mockResolvedValue(null);
+      mockRepo.find.mockResolvedValue([{ id: 'loc-1', name: 'QC RD', isActive: true }]);
+
+      const res = await service.findByCompanyUser('u1');
+
+      expect(res).toEqual([{ id: 'loc-1', name: 'QC RD', isActive: true }]);
     });
   });
 

@@ -1,0 +1,157 @@
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { ENTITY } from '../models/general-model';
+import { LineEntity } from './general.entity';
+import { LocationEntity } from './location.entity';
+import TransactionEntity from './transaction.entity';
+import UserCompanyEntity from './user-company.entity';
+
+@Entity(ENTITY.USER)
+export default class UserEntity extends LineEntity {
+  @Column({ name: 'Preferences', type: 'text', nullable: true })
+  preferences?: string | null;
+
+  @Column({ name: 'Status', type: 'varchar', length: 50, nullable: false })
+  status!: string;
+
+  @Column({ name: 'PreviousStatus', type: 'varchar', length: 50, nullable: true })
+  previousStatus?: string | null;
+
+  @Column({ name: 'RequiresReverification', type: 'bit', nullable: false, default: false })
+  requiresReverification!: boolean;
+
+  @Column({ name: 'Type', type: 'varchar', length: 50, nullable: false })
+  type!: string;
+
+  @Column({ name: 'Username', type: 'varchar', length: 255, nullable: false, unique: true })
+  username!: string;
+
+  @Column({ name: 'Password', type: 'text', nullable: true })
+  password?: string | null;
+
+  @Column({ name: 'ProfilePictureURL', type: 'text', nullable: true })
+  profilePictureURL!: string | null;
+
+  @Column({ name: 'FirstName', type: 'varchar', length: 255, nullable: false })
+  firstName!: string;
+
+  @Column({ name: 'MiddleName', type: 'varchar', length: 255, nullable: true })
+  middleName!: string | null;
+
+  @Column({ name: 'LastName', type: 'varchar', length: 255, nullable: false })
+  lastName!: string;
+
+  @Column({ name: 'DateOfBirth', type: 'datetime', nullable: false })
+  dateOfBirth!: Date;
+
+  @Column({ name: 'Nationality', type: 'varchar', length: 100, nullable: false })
+  nationality!: string;
+
+  @Column({ name: 'StreetAddressLine1', type: 'varchar', length: 255, nullable: false })
+  streetAddressLine1!: string;
+
+  @Column({ name: 'StreetAddressLine2', type: 'varchar', length: 255, nullable: true })
+  streetAddressLine2!: string | null;
+
+  @Column({ name: 'City', type: 'varchar', length: 255, nullable: false })
+  city!: string;
+
+  @Column({ name: 'Province', type: 'varchar', length: 255, nullable: false })
+  province!: string;
+
+  @Column({ name: 'PostalCode', type: 'varchar', length: 50, nullable: false })
+  postalCode!: string;
+
+  @Column({ name: 'Country', type: 'varchar', length: 255, nullable: false })
+  country!: string;
+
+  @Column({ name: 'PhoneNumber', type: 'varchar', length: 50, nullable: false, unique: true })
+  phoneNumber!: string;
+
+  @Column({ name: 'Email', type: 'varchar', length: 255, nullable: false, unique: true })
+  email!: string;
+
+  @Column({ name: 'EmailVerifiedDate', type: 'datetime', nullable: true })
+  emailVerifiedDate!: Date;
+
+  @Column({ name: 'PhoneVerifiedDate', type: 'datetime', nullable: true })
+  phoneVerifiedDate!: Date;
+
+  @Column({ name: 'FailedAttempt', type: 'int', nullable: false })
+  failedAttempt!: number;
+
+  @Column({ name: 'PasswordChangedDate', type: 'datetime', nullable: true })
+  passwordChangedDate!: Date;
+
+  @Column({ name: 'SessionVersionDate', type: 'datetime', nullable: true })
+  sessionVersionDate!: Date;
+
+  @Column({ name: 'SessionEvictionAt', type: 'datetime', nullable: true })
+  sessionEvictionAt?: Date | null;
+
+  @Column({ name: 'TwoFactorEnabled', type: 'bit', nullable: true })
+  twoFactorEnabled!: boolean;
+
+  @Column({ name: 'TwoFactorSecret', type: 'varchar', length: 255, nullable: true })
+  twoFactorSecret!: string;
+
+  @Column({ name: 'BackUpCodes', type: 'text', nullable: true })
+  backUpCodes!: string;
+
+  @Column({ name: 'BoardResolutionUrl', type: 'text', nullable: true })
+  boardResolutionUrl!: string | null;
+
+  @Column({ name: 'RegistryOfDeedId', type: 'varchar', nullable: true })
+  registryOfDeedId!: string | null;
+
+  @Column({ name: 'IsApproved', type: 'bit', nullable: true })
+  isApproved!: boolean;
+
+  @Column({ name: 'ApprovedDate', type: 'datetime', nullable: true })
+  approvedDate!: Date;
+
+  @Column({ name: 'MFAEnabled', type: 'bit', nullable: true })
+  mfaEnabled!: boolean;
+
+  @Column({ name: 'MFASecret', type: 'text', nullable: true })
+  mfaSecret!: string;
+
+  @Column({ name: 'MFAMethod', type: 'varchar', nullable: true })
+  mfaMethod!: string;
+
+  @Column({ name: 'PasswordHistory', type: 'text', nullable: true })
+  passwordHistory!: string | null;
+
+  @Column({ name: 'DeletionReason', type: 'text', nullable: true })
+  deletionReason?: string | null;
+
+  @Column({ name: 'DeletionRequestedBy', type: 'varchar', length: 36, nullable: true })
+  deletionRequestedBy?: string | null;
+
+  @Column({ name: 'DeletionRequestedAt', type: 'datetime', nullable: true })
+  deletionRequestedAt?: Date | null;
+
+  @Column({ name: 'RejectionReason', type: 'text', nullable: true })
+  rejectionReason?: string | null;
+
+  @Column({ name: 'LastLoginDate', type: 'datetime', nullable: true })
+  lastLoginDate?: Date | null;
+
+  @Column({ name: 'IsPasswordExpired', type: 'bit', nullable: false, default: false })
+  isPasswordExpired?: boolean;
+
+  @OneToMany(() => UserCompanyEntity, (userCompany) => userCompany.user, {
+    eager: false,
+  })
+  userCompanies?: UserCompanyEntity[];
+
+  @OneToMany(() => TransactionEntity, (transaction) => transaction.user, {
+    eager: false,
+  })
+  transactions?: TransactionEntity[];
+
+  @ManyToOne(() => LocationEntity, (location) => location.users, {
+    eager: false,
+  })
+  @JoinColumn({ name: 'RegistryOfDeedId' })
+  location?: LocationEntity;
+}

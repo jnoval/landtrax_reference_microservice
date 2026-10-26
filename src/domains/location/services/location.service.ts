@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { CommonResponse, CustomMeta } from '../../../shared/common';
 import { LocationEntity } from '../../../shared/infrastructure/database/entities/location.entity';
+import UserCompanyEntity from '../../../shared/infrastructure/database/entities/user-company.entity';
 import { RedisCacheService } from '../../../shared/infrastructure/redis/redis-cache.service';
 import { uuidv4 } from '../../../shared/utils/uuid';
 import { CreateLocationDto, UpdateLocationDto } from '../dtos/location.dto';
@@ -124,25 +125,31 @@ export class LocationService {
 
   async findByCompanyUser(userId: string): Promise<LocationEntity[]> {
     try {
-      const rows = await this._locationRepo.manager.query(
-        `SELECT DISTINCT rod.Id, rod.Name, rod.Abbreviation, rod.Address, rod.IsActive
-         FROM [Location] rod
-         WHERE rod.Id IN (
-           SELECT u.RegistryOfDeedId
-           FROM [User] u
-           JOIN UserCompany uc ON uc.UserId = u.Id
-           WHERE uc.CompanyId = (
-             SELECT TOP 1 CompanyId FROM UserCompany WHERE UserId = @0 AND DeletedDate IS NULL
-           )
-           AND uc.DeletedDate IS NULL
-           AND u.DeletedDate IS NULL
-         )
-         AND rod.IsActive = 1
-         AND rod.DeletedDate IS NULL
-         ORDER BY rod.Name ASC`,
-        [userId],
-      );
-      return rows || [];
+      const membership = await this._locationRepo.manager
+        .getRepository(UserCompanyEntity)
+        .findOne({
+          where: { userId },
+          order: { createdDate: 'DESC' },
+        });
+
+      if (!membership) {
+        return [];
+      }
+
+      const rows = await this._locationRepo
+        .createQueryBuilder('location')
+        .innerJoin('location.users', 'user')
+        .innerJoin('user.userCompanies', 'userCompany')
+        .where('userCompany.companyId = :companyId', { companyId: membership.companyId })
+        .andWhere('user.deletedDate IS NULL')
+        .andWhere('userCompany.deletedDate IS NULL')
+        .andWhere('location.isActive = :isActive', { isActive: true })
+        .orderBy('location.name', 'ASC')
+        .getMany();
+
+      const unique = new Map<string, LocationEntity>();
+      rows.forEach((row) => unique.set(row.id, row));
+      return [...unique.values()];
     } catch (e: any) {
       this._logger.warn(`Failed to query company locations for user ${userId}: ${e.message}`);
       return await this.findAllActive();
