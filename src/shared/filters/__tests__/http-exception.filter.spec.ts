@@ -46,4 +46,19 @@ describe('HttpExceptionFilter', () => {
       }),
     );
   });
+
+  it('translates SQL Server unique constraint error 2627 to 409 Conflict', () => {
+    const error = {
+      driverError: { number: 2627 },
+    };
+    filter.catch(error, mockHost);
+    expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.CONFLICT);
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: HttpStatus.CONFLICT,
+        error: 'Conflict',
+        message: 'A record with this identifier or name already exists.',
+      }),
+    );
+  });
 });

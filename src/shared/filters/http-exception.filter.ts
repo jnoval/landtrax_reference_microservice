@@ -8,7 +8,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
-    const status =
+    let status =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     let message: string | string[] = 'Internal server error';
@@ -29,7 +29,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
         error = this.sanitizeMessage(responseObj.error || 'Error');
       }
     } else {
-      console.error('Unhandled Exception Caught by Filter:', exception);
+      const dbErr = exception as any;
+      if (dbErr?.driverError?.number === 2627 || dbErr?.driverError?.number === 2601) {
+        status = HttpStatus.CONFLICT;
+        message = 'A record with this identifier or name already exists.';
+        error = 'Conflict';
+      } else {
+        console.error('Unhandled Exception Caught by Filter:', exception);
+      }
     }
 
     if (response.headersSent) {

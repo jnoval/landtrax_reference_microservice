@@ -1,12 +1,13 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { ENTITY } from '../models/general-model';
 import { BaseEntity } from './general.entity';
 import TransactionEntity from './transaction.entity';
 import UserEntity from './user.entity';
 
+@Index('UQ_Location_Name_Active', ['name'], { unique: true, where: 'DeletedDate IS NULL' })
 @Entity(ENTITY.LOCATION)
 export class LocationEntity extends BaseEntity {
-  @Column({ name: 'Name', type: 'varchar', length: 255, nullable: false, unique: true })
+  @Column({ name: 'Name', type: 'varchar', length: 255, nullable: false })
   name!: string;
 
   @Column({ name: 'Abbreviation', type: 'varchar', length: 100, nullable: true })

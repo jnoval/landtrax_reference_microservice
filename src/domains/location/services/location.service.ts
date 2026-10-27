@@ -1,4 +1,4 @@
-﻿import {
+import {
   ConflictException,
   Injectable,
   Logger,
@@ -43,14 +43,21 @@ export class LocationService {
       isActive: data.isActive,
     });
 
-    const response = await this._locationRepo.save(entity);
-    await this._redisService.del(LocationService.ACTIVE_CACHE_KEY);
+    try {
+      const response = await this._locationRepo.save(entity);
+      await this._redisService.del(LocationService.ACTIVE_CACHE_KEY);
 
-    return {
-      message: 'Location created successfully',
-      success: true,
-      data: response,
-    };
+      return {
+        message: 'Location created successfully',
+        success: true,
+        data: response,
+      };
+    } catch (err: any) {
+      if (err?.driverError?.number === 2627 || err?.driverError?.number === 2601) {
+        throw new ConflictException(`Location with name of ${data.name} already exists.`);
+      }
+      throw err;
+    }
   }
 
   async findAllActive(): Promise<LocationEntity[]> {
@@ -178,14 +185,21 @@ export class LocationService {
       updatedDate: new Date(),
     });
 
-    const saved = await this._locationRepo.save(entity);
-    await this._redisService.del(LocationService.ACTIVE_CACHE_KEY);
+    try {
+      const saved = await this._locationRepo.save(entity);
+      await this._redisService.del(LocationService.ACTIVE_CACHE_KEY);
 
-    return {
-      message: 'Location updated successfully',
-      success: true,
-      data: saved,
-    };
+      return {
+        message: 'Location updated successfully',
+        success: true,
+        data: saved,
+      };
+    } catch (err: any) {
+      if (err?.driverError?.number === 2627 || err?.driverError?.number === 2601) {
+        throw new ConflictException(`Location with name of ${data.name || entity.name} already exists.`);
+      }
+      throw err;
+    }
   }
 
   async updateStatus(id: string, updatedBy: string): Promise<CommonResponse<LocationEntity>> {

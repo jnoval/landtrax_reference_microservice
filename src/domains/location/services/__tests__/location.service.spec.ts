@@ -71,6 +71,21 @@ describe('LocationService', () => {
         ),
       ).rejects.toThrow(ConflictException);
     });
+
+    it('catches database unique constraint error 2627 and throws ConflictException', async () => {
+      mockRepo.findOne.mockResolvedValue(null);
+      mockRepo.save.mockRejectedValue({ driverError: { number: 2627 } });
+
+      await expect(
+        service.create(
+          {
+            name: 'Manila RD',
+            isActive: true,
+          },
+          'user-1',
+        ),
+      ).rejects.toThrow(ConflictException);
+    });
   });
 
   describe('findAllActive', () => {
@@ -161,6 +176,15 @@ describe('LocationService', () => {
       expect(res.success).toBe(true);
       expect(mockRepo.save).toHaveBeenCalled();
       expect(mockRedis.del).toHaveBeenCalled();
+    });
+
+    it('catches database unique constraint error 2627 and throws ConflictException on update', async () => {
+      mockRepo.findOne.mockResolvedValue({ id: 'loc-1', name: 'Old RD' });
+      mockRepo.save.mockRejectedValue({ driverError: { number: 2627 } });
+
+      await expect(service.update('loc-1', { name: 'New RD' }, 'user-1')).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('toggles active status', async () => {
