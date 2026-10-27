@@ -179,7 +179,7 @@ export class LocationService {
       }
     }
 
-    Object.assign(entity, {
+    this._locationRepo.merge(entity, {
       ...data,
       updatedBy,
       updatedDate: new Date(),
@@ -194,8 +194,8 @@ export class LocationService {
         success: true,
         data: saved,
       };
-    } catch (err: any) {
-      if (err?.driverError?.number === 2627 || err?.driverError?.number === 2601) {
+    } catch (err: unknown) {
+      if ((err as {driverError: {number:number}})?.driverError?.number === 2627 || (err as {driverError: {number:number}})?.driverError?.number === 2601) {
         throw new ConflictException(`Location with name of ${data.name || entity.name} already exists.`);
       }
       throw err;
@@ -218,9 +218,10 @@ export class LocationService {
     };
   }
 
-  async remove(id: string, deletedBy: string): Promise<CommonResponse> {
+  async delete(id: string, deletedBy: string): Promise<CommonResponse> {
     const entity = await this.findOne(id);
 
+    entity.name=`${entity.name}_${new Date().toUTCString()}` // free-up the name upon delete
     entity.deletedBy = deletedBy;
     entity.deletedDate = new Date();
     await this._locationRepo.save(entity);

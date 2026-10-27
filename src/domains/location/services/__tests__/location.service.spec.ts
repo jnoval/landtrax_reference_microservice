@@ -17,6 +17,7 @@ describe('LocationService', () => {
       findOne: jest.fn(),
       find: jest.fn(),
       createQueryBuilder: jest.fn(),
+      merge: jest.fn(),
       manager: {
         getRepository: jest.fn(),
       },
@@ -93,7 +94,7 @@ describe('LocationService', () => {
       mockRedis.get.mockResolvedValue([{ id: 'loc-1', name: 'QC RD', isActive: true }]);
 
       const res = await service.findAllActive();
-      expect(res.length).toBe(1);
+      expect(res).toHaveLength(1);
       expect(mockRedis.get).toHaveBeenCalledWith('location:active');
       expect(mockRepo.find).not.toHaveBeenCalled();
     });
@@ -103,7 +104,7 @@ describe('LocationService', () => {
       mockRepo.find.mockResolvedValue([{ id: 'loc-1', name: 'QC RD', isActive: true }]);
 
       const res = await service.findAllActive();
-      expect(res.length).toBe(1);
+      expect(res).toHaveLength(1);
       expect(mockRedis.set).toHaveBeenCalledWith(
         'location:active',
         expect.any(Array),
@@ -201,7 +202,7 @@ describe('LocationService', () => {
     it('soft deletes location and invalidates cache', async () => {
       mockRepo.findOne.mockResolvedValue({ id: 'loc-1', name: 'QC RD' });
 
-      const res = await service.remove('loc-1', 'user-1');
+      const res = await service.delete('loc-1', 'user-1');
       expect(res.success).toBe(true);
       expect(mockRepo.save).toHaveBeenCalled();
       expect(mockRedis.del).toHaveBeenCalled();

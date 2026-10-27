@@ -99,6 +99,6 @@ export class LocationController {
   @AuditDescription("Removed location '{identifier}'")
   @ApiOperation({ summary: 'Delete a location' })
   async delete(@ReqContext() req: RequestContextDto, @Param('id') id: string) {
-    return await this._locationService.remove(id, req.userId);
+    return await this._locationService.delete(id, req.userId);
   }
 }

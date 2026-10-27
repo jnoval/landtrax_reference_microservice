@@ -17,7 +17,7 @@ describe('LocationController', () => {
       findOne: jest.fn().mockResolvedValue({ id: 'loc-1', name: 'QC RD' }),
       update: jest.fn().mockResolvedValue({ success: true, message: 'Updated' }),
       updateStatus: jest.fn().mockResolvedValue({ success: true, message: 'Status updated' }),
-      remove: jest.fn().mockResolvedValue({ success: true, message: 'Removed' }),
+      delete: jest.fn().mockResolvedValue({ success: true, message: 'Removed' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -33,13 +33,13 @@ describe('LocationController', () => {
 
   it('delegates findAllActive to service', async () => {
     const res = await controller.findAllActive();
-    expect(res.length).toBe(1);
+    expect(res).toHaveLength(1);
     expect(mockService.findAllActive).toHaveBeenCalled();
   });
 
   it('delegates findByCompanyUser to service', async () => {
     const res = await controller.findByCompanyUser('u1');
-    expect(res.length).toBe(1);
+    expect(res).toHaveLength(1);
     expect(mockService.findByCompanyUser).toHaveBeenCalledWith('u1');
   });
 
@@ -58,6 +58,6 @@ describe('LocationController', () => {
   it('delegates delete to service', async () => {
     const res = await controller.delete({ userId: 'u1' } as any, 'loc-1');
     expect(res.success).toBe(true);
-    expect(mockService.remove).toHaveBeenCalledWith('loc-1', 'u1');
+    expect(mockService.delete).toHaveBeenCalledWith('loc-1', 'u1');
   });
 });
