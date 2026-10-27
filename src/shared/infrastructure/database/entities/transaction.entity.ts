@@ -114,8 +114,8 @@ export default class TransactionEntity extends BaseEntity {
   @Column({ name: 'LandtraxAddressId', type: 'uniqueidentifier', nullable: true })
   landtraxAddressId?: string | null;
 
-  @Column({ name: 'RegistryOfDeedId', type: 'varchar', nullable: true })
-  registryOfDeedId!: string | null;
+  @Column({ name: 'LocationId', type: 'varchar', nullable: true })
+  locationId!: string | null;
 
   @ManyToOne(() => UserEntity, {
     eager: false,
@@ -130,6 +130,6 @@ export default class TransactionEntity extends BaseEntity {
     onDelete: 'NO ACTION',
     onUpdate: 'CASCADE',
   })
-  @JoinColumn({ name: 'RegistryOfDeedId', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'LocationId', referencedColumnName: 'id' })
   location?: LocationEntity;
 }

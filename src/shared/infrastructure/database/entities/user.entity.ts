@@ -100,8 +100,8 @@ export default class UserEntity extends LineEntity {
   @Column({ name: 'BoardResolutionUrl', type: 'text', nullable: true })
   boardResolutionUrl!: string | null;
 
-  @Column({ name: 'RegistryOfDeedId', type: 'varchar', nullable: true })
-  registryOfDeedId!: string | null;
+  @Column({ name: 'LocationId', type: 'varchar', nullable: true })
+  locationId!: string | null;
 
   @Column({ name: 'IsApproved', type: 'bit', nullable: true })
   isApproved!: boolean;
@@ -152,6 +152,6 @@ export default class UserEntity extends LineEntity {
   @ManyToOne(() => LocationEntity, (location) => location.users, {
     eager: false,
   })
-  @JoinColumn({ name: 'RegistryOfDeedId' })
+  @JoinColumn({ name: 'LocationId' })
   location?: LocationEntity;
 }
