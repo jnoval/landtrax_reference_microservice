@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/shared/decorators/public.decorator';
 import { AuditDescription } from '../../../shared/decorators/audit-description.decorator';
 import { Audit } from '../../../shared/decorators/audit.decorator';
 import { PermissionRequired } from '../../../shared/decorators/authorization.decorators';
@@ -46,6 +47,7 @@ export class ServiceCatalogController {
     return await this._serviceService.findAll(query);
   }
 
+  @Public()
   @Get('active-catalogs')
   //@PermissionRequired('View Services Catalogs')
   @AuditDescription('Accessed the directory of active professional service offerings')
@@ -62,7 +64,7 @@ export class ServiceCatalogController {
   }
 
   @Get(':id')
-  @PermissionRequired('View Services Catalogs')
+  //@PermissionRequired('View Services Catalogs')
   @ApiOperation({ summary: 'Get service by id' })
   async findOne(@Param('id') id: string) {
     return await this._serviceService.findOne(id);
