@@ -1,6 +1,11 @@
+import 'dotenv/config';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import Entities from '../shared/infrastructure/database/entities/index';
+
+const migrationsPath = __dirname.includes('dist')
+  ? __dirname + '/../migrations/*.js'
+  : __dirname + '/../migrations/*.ts';
 
 export const getTypeOrmConfig = (configService: ConfigService): any => {
   const DB_HOST = configService.get<string>('DB_HOST') || process.env.DB_HOST || 'localhost';
@@ -24,7 +29,7 @@ export const getTypeOrmConfig = (configService: ConfigService): any => {
       trustServerCertificate: true,
     },
     logging: process.env.ENABLE_QUERY_LOGGING === 'true' ? ['query', 'error'] : false,
-    migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+    migrations: [migrationsPath],
     migrationsTableName: 'migrations',
     migrationsRun: true,
     retryAttempts: 10,
@@ -41,7 +46,7 @@ export default new DataSource({
   database: process.env.DB_NAME,
   entities: Object.values(Entities),
   synchronize: false,
-  migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+  migrations: [migrationsPath],
   migrationsTableName: 'migrations',
   options: {
     enableArithAbort: true,
