@@ -22,17 +22,33 @@ export class AuditTrailHttpClient extends AuditTrailService {
     result?: string;
     ip?: string;
   }): Promise<any> {
-    const baseUrl = process.env.MONOLITH_BASE_URL;
+    const baseUrl = process.env.AUDIT_SERVICE_URL || process.env.MONOLITH_BASE_URL;
     if (!baseUrl || baseUrl === 'undefined' || baseUrl.trim() === '') {
       this._logger.debug(
-        `[AuditTrailHttpClient] MONOLITH_BASE_URL is not configured. Audit trail skipped for action=${dto.action}`,
+        `[AuditTrailHttpClient] AUDIT_SERVICE_URL / MONOLITH_BASE_URL is not configured. Audit trail skipped for action=${dto.action}`,
       );
       return { success: true, skipped: true };
     }
 
+    const normalizedUserId =
+      !dto.userId || String(dto.userId).toLowerCase() === 'system'
+        ? null
+        : dto.userId;
+
+    const payload = {
+      ...dto,
+      userId: normalizedUserId,
+      resource: dto.entity || 'Reference',
+      area: 'Reference & Catalog',
+      details: dto.details || null,
+      status: dto.result || 'SUCCESS',
+      ipAddress: dto.ip || '127.0.0.1',
+      timestamp: new Date().toISOString(),
+    };
+
     const url = `${baseUrl.replace(/\/+$/, '')}/internal/audit-trail`;
     this.httpService
-      .post(url, dto, {
+      .post(url, payload, {
         headers: { 'x-internal-secret': process.env.APP_AUTH || '' },
       })
       .subscribe({

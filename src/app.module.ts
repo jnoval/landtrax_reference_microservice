@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,6 +12,8 @@ import { LocationModule } from './domains/location/location.module';
 import { RequirementModule } from './domains/requirement/requirement.module';
 import { ServiceCatalogModule } from './domains/service-catalog/service-catalog.module';
 import { SystemSettingsModule } from './domains/system-settings/system-settings.module';
+import { InternalHttpModule } from './shared/infrastructure/http/internal-http.module';
+import { AuditTrailInterceptor } from './shared/logging/audit-trail.interceptor';
 
 @Module({
   imports: [
@@ -24,6 +27,7 @@ import { SystemSettingsModule } from './domains/system-settings/system-settings.
       useFactory: (configService: ConfigService) => getTypeOrmConfig(configService),
       inject: [ConfigService],
     }),
+    InternalHttpModule,
     CategoryModule,
     ServiceCatalogModule,
     RequirementModule,
@@ -32,6 +36,12 @@ import { SystemSettingsModule } from './domains/system-settings/system-settings.
     FAQModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditTrailInterceptor,
+    },
+  ],
 })
 export class AppModule {}
